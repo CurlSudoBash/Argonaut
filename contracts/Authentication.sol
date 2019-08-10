@@ -27,15 +27,12 @@ contract Authentication {
 
   Voting public voting;
 
-  mapping (bytes32 => bool) public votesAvailable;
-
   /* Solidity doesn't let you pass in an array of strings in the constructor (yet).
   We will use an array of bytes32 instead to store the list of candidates
   */
 
   bytes32[] public voterList;
   mapping (bytes32 => bytes32) public constituencyDict;
-
 
   /* This is the constructor which will be called once when you
   deploy the contract to the blockchain. When we deploy the contract,
@@ -44,16 +41,9 @@ contract Authentication {
   constructor(bytes32[] memory myList, bytes32[] memory constituencies, address addr) public {
     voterList = myList;
     for(uint i = 0; i < voterList.length; i++) {
-      votesAvailable[voterList[i]] = true;
       constituencyDict[voterList[i]] = constituencies[i];
     }
     voting = Voting(addr);
-  }
-
-  function resetVoters() public {
-    for(uint i = 0; i < voterList.length; i++) {
-      votesAvailable[voterList[i]] = true;
-    }
   }
 
   function isVoterExist(bytes32 voter) public view returns (bool,string memory) {
@@ -61,11 +51,6 @@ contract Authentication {
       if (voterList[i] == voter) return (true, "success");
     }
     return (false, "Voter does not exist");
-  }
-
-  function isVoteAvailable(bytes32 voter) public view returns (bool,string memory) {
-    if(votesAvailable[voter] == true) return (true, "success");
-    return (false,"votes not available for the voter");
   }
 
   function checkConstituency(bytes32 candidate, bytes32 voter) public returns (bool, string memory) {
@@ -85,16 +70,12 @@ contract Authentication {
   // is equivalent to casting a vote
   function validVoter(bytes32 candidate, bytes32 voter) public returns (bool,string memory) {
     bool isVoterExistBool;
-    bool isVoteAvailableBool;
     bool checkConstituencyBool;
     string memory isVoterExistString;
-    string memory isVoteAvailableString;
     string memory checkConstituencyString;
     (isVoterExistBool,isVoterExistString) = isVoterExist(voter);
-    (isVoteAvailableBool,isVoteAvailableString) = isVoteAvailable(voter);
     (checkConstituencyBool, checkConstituencyString) = checkConstituency(candidate, voter);
     if(isVoterExistBool == false) return (false, isVoterExistString);
-    if(isVoteAvailableBool == false) return (false, isVoteAvailableString);
     if(checkConstituencyBool == false) return (false, checkConstituencyString);
     return (true, "success");
   }
@@ -104,8 +85,7 @@ contract Authentication {
     bool validVoterBool;
     string memory validVoterString;
     (validVoterBool,validVoterString) = validVoter(candidate, voter);
-    require(validVoterBool == true, validVoterString);
-    votesAvailable[voter] = false;
+    if(validVoterBool == false) return (false, validVoterString);
     return (true, "success");
   }
 
@@ -115,7 +95,6 @@ contract Authentication {
     (isVoterExistBool,) = isVoterExist(voter);
     require(isVoterExistBool == false, "Voter already exists");
     voterList.push(voter);
-    votesAvailable[voter] = true;
     constituencyDict[voter] = constituency;
     return (true, "success");
   }

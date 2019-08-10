@@ -15,6 +15,7 @@ contract Voting {
 
   bytes32[] public candidateList;
   mapping (bytes32 => bytes32) public constituencyDict;
+  mapping (bytes32 => bool) public voterDict;
 
   /* This is the constructor which will be called once when you
   deploy the contract to the blockchain. When we deploy the contract,
@@ -39,11 +40,13 @@ contract Voting {
   /* This function increments the vote count for the specified candidate. This
   is equivalent to casting a vote
   */
-  function voteForCandidate(bytes32 candidate) public returns (bool,string memory) {
+  function voteForCandidate(bytes32 candidate, bytes32 voter) public returns (bool,string memory) {
     bool validCandidateBool;
     string memory validCandidateString;
     (validCandidateBool,validCandidateString) = validCandidate(candidate);
     require(validCandidateBool == true, validCandidateString);
+    require(voterDict[voter] == false, "You have already voted");
+    voterDict[voter] = true;
     votesReceived[candidate] += 1;
     return (true,"success");
   }

@@ -7,14 +7,6 @@ const votingABI = votingJSON.abi;
 const authenticationJSON = require('../../build/contracts/Authentication')
 const authenticationABI = authenticationJSON.abi;
 
-// Sample Data
-// let candidateList = ['Rahul Gandhi','DK Shivakumar','Ramalinga Reddy','Vijay Rupani','Arvind Kejriwal','Narendra Modi'];
-// let constituencyList = ['Delhi','Karnataka','Karnataka','Gujarat','Gujarat','Delhi','Gujarat'];
-// let votingAddress = "0xFf4A8D81f03dD5432B22B8A0e587A7599cceE748";
-// let voterList = ['Manan','Joydeep','Sarthak','Danish','Shaloo','Arjun','Shakaal'];
-// let voterConstituencyList = ['Karnataka','Delhi','Delhi','Delhi','Karnataka','Delhi','Mumbai'];
-// let authenticationAddress = "0x5fDbBBA04BE10B5Cf8b1420AeAf5Ff62c674fd56";
-
 class Blockchain {
 
     // Deploys new voting contract and returns votingAddress
@@ -70,11 +62,12 @@ class Blockchain {
     }
 
     // Should be called after calling checkVoterAuthenticity
-    static async voteForCandidate({candidate, votingAddress}) {
+    static async voteForCandidate({candidate, voter, votingAddress}) {
         const accounts = await web3.eth.getAccounts();
         const votingInstance = new web3.eth.Contract(votingABI, votingAddress);
         return votingInstance.methods.voteForCandidate(
-            web3.utils.asciiToHex(candidate))
+            web3.utils.asciiToHex(candidate),
+            web3.utils.asciiToHex(voter))
             .send({
                 from: accounts[0], 
                 gas: 4700000
@@ -120,14 +113,11 @@ class Blockchain {
         return authenticationInstance.methods.isAuthentic(
             web3.utils.asciiToHex(candidate),
             web3.utils.asciiToHex(voter))
-            .send({
-                from: accounts[1], 
-                gas: 4700000
-            }, (error, transactionHash) => {
-                if(error != null) console.log(error);
-            })
-            .then(transactionInstance => transactionInstance.status)
-            .catch(err => false);
+            .call()
+            .then(res => {
+                console.log(res['1']);
+                return res['0'];
+            });
     }
 }
 
