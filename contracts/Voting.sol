@@ -16,7 +16,6 @@ contract Voting {
   bytes32[] public candidateList;
   mapping (bytes32 => bytes32) public constituencyDict;
 
-
   /* This is the constructor which will be called once when you
   deploy the contract to the blockchain. When we deploy the contract,
   we will pass an array of candidates who will be contesting in the election
@@ -32,67 +31,46 @@ contract Voting {
   function totalVotesFor(bytes32 candidate) public view returns (uint8,bool) {
     bool validCandidateBool;
     string memory validCandidateString;
-
     (validCandidateBool,validCandidateString) = validCandidate(candidate);
-    if (validCandidateBool == false) return (0,false);
+    if (validCandidateBool == false) return (0, false);
     return (votesReceived[candidate],true);
   }
 
-  // This function increments the vote count for the specified candidate. This
-  // is equivalent to casting a vote
-  function voteForCandidate(bytes32 candidate) public returns (bool,string memory){
-
+  /* This function increments the vote count for the specified candidate. This
+  is equivalent to casting a vote
+  */
+  function voteForCandidate(bytes32 candidate) public returns (bool,string memory) {
     bool validCandidateBool;
     string memory validCandidateString;
-
     (validCandidateBool,validCandidateString) = validCandidate(candidate);
-
-    if (validCandidateBool == false){
-      return (false,validCandidateString);
-    }
+    require(validCandidateBool == true, validCandidateString);
     votesReceived[candidate] += 1;
     return (true,"success");
   }
 
   function getCandidateConstituency(bytes32 candidate) public view returns (bool,bytes32) {
-
     bytes32 my_null;
     bool validCandidateBool;
     string memory validCandidateString;
-     (validCandidateBool,validCandidateString) = validCandidate(candidate);
-    if (validCandidateBool == false)
-    return (false, my_null);
+    (validCandidateBool,validCandidateString) = validCandidate(candidate);
+    if (validCandidateBool == false) return (false, my_null);
     return (true,constituencyDict[candidate]);
-  }
-
-  function test () public pure returns (bool,string memory){
-    return (true,"success");
   }
 
   function validCandidate(bytes32 candidate) public view returns (bool,string memory) {
     for(uint i = 0; i < candidateList.length; i++) {
-      if (candidateList[i] == candidate) {
-        return (true,"success");
-      }
+      if (candidateList[i] == candidate) return (true, "success");
     }
-    return (false,"candidate doesnot exist");
+    return (false, "Candidate does not exist");
   }
 
-  function bytes32ToString(bytes32 x) public pure returns (string memory) {
-    bytes memory bytesString = new bytes(32);
-    uint charCount = 0;
-    uint j;
-    for (j = 0; j < 32; j++) {
-        byte char = byte(bytes32(uint(x) * 2 ** (8 * j)));
-        if (char != 0) {
-            bytesString[charCount] = char;
-            charCount++;
-        }
-    }
-    bytes memory bytesStringTrimmed = new bytes(charCount);
-    for (j = 0; j < charCount; j++) {
-        bytesStringTrimmed[j] = bytesString[j];
-    }
-    return string(bytesStringTrimmed);
+  // This function registers a candidate
+  function registerCandidate(bytes32 candidate, bytes32 constituency) public returns (bool,string memory) {
+    bool validCandidateBool;
+    (validCandidateBool,) = validCandidate(candidate);
+    require(validCandidateBool == false, "Candidate already exists");
+    candidateList.push(candidate);
+    constituencyDict[candidate] = constituency;
+    return (true, "success");
   }
 }

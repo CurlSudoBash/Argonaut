@@ -43,16 +43,11 @@ contract Authentication {
   */
   constructor(bytes32[] memory myList, bytes32[] memory constituencies, address addr) public {
     voterList = myList;
-
     for(uint i = 0; i < voterList.length; i++) {
-      // voterList[i] = myList[i];
-      // constituencyDict[voterList[i]]=myList[3+i];
       votesAvailable[voterList[i]] = true;
       constituencyDict[voterList[i]] = constituencies[i];
-
     }
     voting = Voting(addr);
-    // voterList=myVoterList;
   }
 
   function resetVoters() public {
@@ -63,18 +58,13 @@ contract Authentication {
 
   function isVoterExist(bytes32 voter) public view returns (bool,string memory) {
     for(uint i = 0; i < voterList.length; i++) {
-      if (voterList[i] == voter) {
-        return (true,"success");
-      }
+      if (voterList[i] == voter) return (true, "success");
     }
-    return (false,"voter does not exist");
+    return (false, "Voter does not exist");
   }
 
   function isVoteAvailable(bytes32 voter) public view returns (bool,string memory) {
-    if(votesAvailable[voter] == true)
-    {
-      return (true,"success");
-    }
+    if(votesAvailable[voter] == true) return (true, "success");
     return (false,"votes not available for the voter");
   }
 
@@ -82,37 +72,17 @@ contract Authentication {
     bool candidateConstituencyBool;
     bytes32 candidateConstituency;
     (candidateConstituencyBool,candidateConstituency) = voting.getCandidateConstituency(candidate);
-    if(candidateConstituencyBool == false)
-    return (false,"candidate does not exist.");
+    if(candidateConstituencyBool == false) return (false, "Candidate does not exist.");
     bool isVoterExistBool;
     string memory isVoterExistString;
     (isVoterExistBool,isVoterExistString) = isVoterExist(voter);
-    if(isVoterExistBool == false)
-      return (false,"voter does not exist.");
-    if(candidateConstituency == constituencyDict[voter])
-      return (true,"undefined");
-    return (false,"candidate and voter belong to different constituencies.");
-  }
-
-  // This function returns the total votes a candidate has received so far
-  function isAuthentic(bytes32 candidate, bytes32 voter) public returns (bool,string memory) {
-    bool validVoterBool;
-    string memory validVoterString;
-    (validVoterBool,validVoterString) = validVoter(candidate, voter);
-    if(validVoterBool == false) {
-      return (false,validVoterString);
-    }
-    votesAvailable[voter] = false;
-    return (true,"success");
-  }
-
-  function ping() public pure returns (bool){
-    return true;
+    if(isVoterExistBool == false) return (false, "Voter does not exist.");
+    if(candidateConstituency == constituencyDict[voter]) return (true,"undefined");
+    return (false, "Candidate and Voter belong to different constituencies.");
   }
 
   // This function increments the vote count for the specified candidate. This
   // is equivalent to casting a vote
-
   function validVoter(bytes32 candidate, bytes32 voter) public returns (bool,string memory) {
     bool isVoterExistBool;
     bool isVoteAvailableBool;
@@ -122,38 +92,31 @@ contract Authentication {
     string memory checkConstituencyString;
     (isVoterExistBool,isVoterExistString) = isVoterExist(voter);
     (isVoteAvailableBool,isVoteAvailableString) = isVoteAvailable(voter);
-    (checkConstituencyBool, checkConstituencyString) = checkConstituency(candidate,voter);
-
-    if(isVoterExistBool == false) {
-      return (false,isVoterExistString);
-    }
-
-    if(isVoteAvailableBool == false) {
-      return (false,isVoteAvailableString);
-    }
-
-    if(checkConstituencyBool == false) {
-      return (false,checkConstituencyString);
-    }
-
-    return (true,"pika");
+    (checkConstituencyBool, checkConstituencyString) = checkConstituency(candidate, voter);
+    if(isVoterExistBool == false) return (false, isVoterExistString);
+    if(isVoteAvailableBool == false) return (false, isVoteAvailableString);
+    if(checkConstituencyBool == false) return (false, checkConstituencyString);
+    return (true, "success");
   }
 
-  function bytes32ToString(bytes32 x) public pure returns (string memory) {
-    bytes memory bytesString = new bytes(32);
-    uint charCount = 0;
-    uint j;
-    for (j = 0; j < 32; j++) {
-        byte char = byte(bytes32(uint(x) * 2 ** (8 * j)));
-        if (char != 0) {
-            bytesString[charCount] = char;
-            charCount++;
-        }
-    }
-    bytes memory bytesStringTrimmed = new bytes(charCount);
-    for (j = 0; j < charCount; j++) {
-        bytesStringTrimmed[j] = bytesString[j];
-    }
-    return string(bytesStringTrimmed);
+  // This is the main function which checks whether a voter can vote for a candidate or not
+  function isAuthentic(bytes32 candidate, bytes32 voter) public returns (bool, string memory) {
+    bool validVoterBool;
+    string memory validVoterString;
+    (validVoterBool,validVoterString) = validVoter(candidate, voter);
+    require(validVoterBool == true, validVoterString);
+    votesAvailable[voter] = false;
+    return (true, "success");
+  }
+
+  // This function registers a voter
+  function registerVoter(bytes32 voter, bytes32 constituency) public returns (bool, string memory) {
+    bool isVoterExistBool;
+    (isVoterExistBool,) = isVoterExist(voter);
+    require(isVoterExistBool == false, "Voter already exists");
+    voterList.push(voter);
+    votesAvailable[voter] = true;
+    constituencyDict[voter] = constituency;
+    return (true, "success");
   }
 }
